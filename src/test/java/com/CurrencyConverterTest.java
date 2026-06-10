@@ -83,8 +83,7 @@ public class CurrencyConverterTest {
     @Test
     void formatResult_hasTwoDecimalPlaces() {
         String output = CurrencyConverter.formatResult("USD", new BigDecimal("1234.50"));
-        assertTrue(output.contains("1,234.50") || output.contains("1234.50"),
-                "Formatted amount must include two decimal places");
+        assertEquals("USD 1,234.50", output);
     }
 
     @Test
@@ -97,21 +96,21 @@ public class CurrencyConverterTest {
 
     @Test
     void extractRate_parsesRateCorrectly() {
-        String json = "{\"conversion_rates\":{\"EUR\":1.08,\"GBP\":0.79}}";
+        String json = "{\"result\":\"success\",\"conversion_rates\":{\"EUR\":1.08,\"GBP\":0.79}}";
         BigDecimal rate = CurrencyConverter.extractRate(json, "EUR");
         assertEquals(0, new BigDecimal("1.08").compareTo(rate));
     }
 
     @Test
     void extractRate_uppercasesTargetCurrency() {
-        String json = "{\"conversion_rates\":{\"EUR\":1.08}}";
+        String json = "{\"result\":\"success\",\"conversion_rates\":{\"EUR\":1.08}}";
         BigDecimal rate = CurrencyConverter.extractRate(json, "eur");
         assertEquals(0, new BigDecimal("1.08").compareTo(rate));
     }
 
     @Test
     void extractRate_throwsForMissingCurrency() {
-        String json = "{\"conversion_rates\":{\"EUR\":1.08}}";
+        String json = "{\"result\":\"success\",\"conversion_rates\":{\"EUR\":1.08}}";
         assertThrows(JSONException.class,
                 () -> CurrencyConverter.extractRate(json, "XYZ"));
     }
@@ -127,5 +126,114 @@ public class CurrencyConverterTest {
         String json = "{\"other_key\":{\"USD\":1.0}}";
         assertThrows(JSONException.class,
                 () -> CurrencyConverter.extractRate(json, "USD"));
+    }
+
+    // ── isValidCurrency ───────────────────────────────────────────────────────
+
+    @Test
+    void isValidCurrency_validUppercase() {
+        assertTrue(CurrencyConverter.isValidCurrency("USD"));
+    }
+
+    @Test
+    void isValidCurrency_validLowercase() {
+        assertTrue(CurrencyConverter.isValidCurrency("eur"));
+    }
+
+    @Test
+    void isValidCurrency_validMixedCase() {
+        assertTrue(CurrencyConverter.isValidCurrency("gBp"));
+    }
+
+    @Test
+    void isValidCurrency_tooShort() {
+        assertFalse(CurrencyConverter.isValidCurrency("US"));
+    }
+
+    @Test
+    void isValidCurrency_tooLong() {
+        assertFalse(CurrencyConverter.isValidCurrency("USDD"));
+    }
+
+    @Test
+    void isValidCurrency_emptyString() {
+        assertFalse(CurrencyConverter.isValidCurrency(""));
+    }
+
+    @Test
+    void isValidCurrency_nullInput() {
+        assertFalse(CurrencyConverter.isValidCurrency(null));
+    }
+
+    @Test
+    void isValidCurrency_containsDigit() {
+        assertFalse(CurrencyConverter.isValidCurrency("US1"));
+    }
+
+    @Test
+    void isValidCurrency_containsSpace() {
+        assertFalse(CurrencyConverter.isValidCurrency("U D"));
+    }
+
+    @Test
+    void isValidCurrency_containsSpecialChar() {
+        assertFalse(CurrencyConverter.isValidCurrency("U$D"));
+    }
+
+    // ── isValidAmount ─────────────────────────────────────────────────────────
+
+    @Test
+    void isValidAmount_wholeNumber() {
+        assertTrue(CurrencyConverter.isValidAmount("100"));
+    }
+
+    @Test
+    void isValidAmount_decimal() {
+        assertTrue(CurrencyConverter.isValidAmount("99.99"));
+    }
+
+    @Test
+    void isValidAmount_smallPositive() {
+        assertTrue(CurrencyConverter.isValidAmount("0.01"));
+    }
+
+    @Test
+    void isValidAmount_zero() {
+        assertFalse(CurrencyConverter.isValidAmount("0"));
+    }
+
+    @Test
+    void isValidAmount_zeroDecimal() {
+        assertFalse(CurrencyConverter.isValidAmount("0.00"));
+    }
+
+    @Test
+    void isValidAmount_negative() {
+        assertFalse(CurrencyConverter.isValidAmount("-50"));
+    }
+
+    @Test
+    void isValidAmount_alphabetic() {
+        assertFalse(CurrencyConverter.isValidAmount("abc"));
+    }
+
+    @Test
+    void isValidAmount_empty() {
+        assertFalse(CurrencyConverter.isValidAmount(""));
+    }
+
+    @Test
+    void isValidAmount_nullInput() {
+        assertFalse(CurrencyConverter.isValidAmount(null));
+    }
+
+    @Test
+    void isValidAmount_whitespaceOnly() {
+        assertFalse(CurrencyConverter.isValidAmount("   "));
+    }
+
+    @Test
+    void isValidAmount_leadingTrailingWhitespace() {
+        assertTrue(CurrencyConverter.isValidAmount("  100  "));
     }
 }
