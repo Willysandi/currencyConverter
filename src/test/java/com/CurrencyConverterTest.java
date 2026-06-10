@@ -4,6 +4,7 @@ import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -126,6 +127,35 @@ public class CurrencyConverterTest {
         String json = "{\"other_key\":{\"USD\":1.0}}";
         assertThrows(JSONException.class,
                 () -> CurrencyConverter.extractRate(json, "USD"));
+    }
+
+    // ── isSupportedCurrency ───────────────────────────────────────────────────
+
+    private static final Set<String> CODES = Set.of("USD", "EUR", "GBP");
+
+    @Test
+    void isSupportedCurrency_validCode() {
+        assertTrue(CurrencyConverter.isSupportedCurrency("USD", CODES));
+    }
+
+    @Test
+    void isSupportedCurrency_validLowercase() {
+        assertTrue(CurrencyConverter.isSupportedCurrency("usd", CODES));
+    }
+
+    @Test
+    void isSupportedCurrency_unknownCode() {
+        assertFalse(CurrencyConverter.isSupportedCurrency("XYZ", CODES));
+    }
+
+    @Test
+    void isSupportedCurrency_nullInput() {
+        assertFalse(CurrencyConverter.isSupportedCurrency(null, CODES));
+    }
+
+    @Test
+    void isSupportedCurrency_emptyString() {
+        assertFalse(CurrencyConverter.isSupportedCurrency("", CODES));
     }
 
     // ── isValidCurrency ───────────────────────────────────────────────────────
